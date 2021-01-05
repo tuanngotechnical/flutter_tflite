@@ -58,7 +58,7 @@ public class TflitePlugin implements MethodCallHandler {
   private boolean tfLiteBusy = false;
   private int inputSize = 0;
   private Vector<String> labels;
-  float[][] labelProb;
+  byte[][] labelProb;
   private static final int BYTES_PER_CHANNEL = 4;
 
   String[] partNames = {
@@ -258,7 +258,7 @@ public class TflitePlugin implements MethodCallHandler {
       while ((line = br.readLine()) != null) {
         labels.add(line);
       }
-      labelProb = new float[1][labels.size()];
+      labelProb = new byte[1][labels.size()];
       br.close();
     } catch (IOException e) {
       throw new RuntimeException("Failed to read label file", e);
@@ -277,7 +277,8 @@ public class TflitePlugin implements MethodCallHandler {
             });
 
     for (int i = 0; i < labels.size(); ++i) {
-      float confidence = labelProb[0][i];
+      float confidence = labelProb[0][i] & 0xFF;
+      confidence = confidence / 255;
       if (confidence > threshold) {
         Map<String, Object> res = new HashMap<>();
         res.put("index", i);
