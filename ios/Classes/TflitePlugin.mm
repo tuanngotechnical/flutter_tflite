@@ -2,7 +2,6 @@
 #define TFLITE2
 
 #import "TflitePlugin.h"
-
 #include <pthread.h>
 #include <unistd.h>
 #include <fstream>
@@ -414,7 +413,7 @@ void feedInputTensorFrame(const FlutterStandardTypedData* typedData, int* input_
   feedInputTensor(in, input_size, image_height, image_width, image_channels, input_mean, input_std);
 }
 
-NSMutableArray* GetTopN(const float* prediction, const unsigned long prediction_size, const int num_results,
+NSMutableArray* GetTopN(const uint8_t* prediction, const unsigned long prediction_size, const int num_results,
                     const float threshold) {
   std::priority_queue<std::pair<float, int>, std::vector<std::pair<float, int>>,
   std::greater<std::pair<float, int>>> top_result_pq;
@@ -422,8 +421,8 @@ NSMutableArray* GetTopN(const float* prediction, const unsigned long prediction_
   
   const long count = prediction_size;
   for (int i = 0; i < count; ++i) {
-    const float value = prediction[i];
-    
+    float value = prediction[i];
+    value = value / 255;      
     if (value < threshold) {
       continue;
     }
@@ -479,7 +478,7 @@ void runModelOnImage(NSDictionary* args, FlutterResult result) {
     }
     
 #ifdef TFLITE2
-    float* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.f;
+    uint8_t* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.uint8;
 #else
     float* output = interpreter->typed_output_tensor<float>(0);
 #endif
@@ -512,7 +511,7 @@ void runModelOnBinary(NSDictionary* args, FlutterResult result) {
     }
     
 #ifdef TFLITE2
-    float* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.f;
+    uint8_t* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.uint8;
 #else
     float* output = interpreter->typed_output_tensor<float>(0);
 #endif
@@ -550,7 +549,7 @@ void runModelOnFrame(NSDictionary* args, FlutterResult result) {
     }
 
 #ifdef TFLITE2
-    float* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.f;
+    uint8_t* output = TfLiteInterpreterGetOutputTensor(interpreter, 0)->data.uint8;
 #else
     float* output = interpreter->typed_output_tensor<float>(0);
 #endif
